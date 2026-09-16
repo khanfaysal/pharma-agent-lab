@@ -44,7 +44,7 @@ export const config = {
 
   embeddings: {
     provider: str('EMBEDDING_PROVIDER', 'gemini'),
-    model: str('EMBEDDING_MODEL', 'text-embedding-004'),
+    model: str('EMBEDDING_MODEL', 'gemini-embedding-2'),
     // Must match the column width in db/migrations/002_vector_schema.sql.
     dim: num('EMBEDDING_DIM', 768),
   },
@@ -63,9 +63,9 @@ export const config = {
    * concrete model that is, so swapping providers is a .env edit.
    */
   tiers: {
-    fast: parseModelRef(str('TIER_FAST'), { provider: 'gemini', model: 'gemini-2.0-flash-lite' }),
-    balanced: parseModelRef(str('TIER_BALANCED'), { provider: 'gemini', model: 'gemini-2.0-flash' }),
-    strong: parseModelRef(str('TIER_STRONG'), { provider: 'gemini', model: 'gemini-2.5-flash' }),
+    fast: parseModelRef(str('TIER_FAST'), { provider: 'gemini', model: 'gemini-3.5-flash-lite' }),
+    balanced: parseModelRef(str('TIER_BALANCED'), { provider: 'gemini', model: 'gemini-3.6-flash' }),
+    strong: parseModelRef(str('TIER_STRONG'), { provider: 'gemini', model: 'gemini-3.8-flash' }),
   },
 
   server: {

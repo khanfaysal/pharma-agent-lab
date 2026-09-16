@@ -14,6 +14,12 @@ export interface ToolCall {
   id: string;
   name: string;
   arguments: Record<string, unknown>;
+  /**
+   * Opaque provider blob that must be echoed back verbatim on the next turn.
+   * Gemini 3.x rejects a conversation whose functionCall parts have lost their
+   * thought_signature. Nothing above the provider layer reads this.
+   */
+  signature?: string;
 }
 
 export interface ChatMessage {

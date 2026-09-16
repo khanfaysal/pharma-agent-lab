@@ -152,7 +152,7 @@ export default function ComparePage() {
 
           <p className="text-xs text-ink-500">
             One question is an anecdote. For a defensible comparison run the full suite on the{' '}
-            <a href="/eval" className="underline">Evaluate</a> page, or{' '}
+            <a href="/dev/eval" className="underline">Evaluate</a> page, or{' '}
             <code className="font-mono">npm run eval -w @lab/api -- --agents</code>.
           </p>
 

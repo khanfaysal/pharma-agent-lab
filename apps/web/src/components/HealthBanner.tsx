@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { api, type Health } from '@/lib/api';
 
@@ -9,8 +10,16 @@ import { api, type Health } from '@/lib/api';
  * Its main job is the degraded warning: if no API key is configured the agent
  * silently falls back to the mock provider, and a comparison run in that state
  * measures stubs, not models. That has to be impossible to miss.
+ *
+ * Two forms. Under /dev it is the full status strip -- row counts, vector
+ * backend, embedding model, resolved tiers -- because that is exactly what a
+ * developer needs standing in front of them. On the user surface it renders
+ * nothing at all unless something is wrong, since row counts and tier names
+ * mean nothing to someone who just wants an answer.
  */
 export function HealthBanner() {
+  const pathname = usePathname() ?? '/';
+  const full = pathname === '/dev' || pathname.startsWith('/dev/');
   const [health, setHealth] = useState<Health | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,13 +33,30 @@ export function HealthBanner() {
     return (
       <div className="border-b border-red-200 bg-red-50 px-6 py-2 text-sm text-red-800">
         <span className="mx-auto block max-w-7xl">
-          Cannot reach the API ({error}). Start it with <code className="font-mono">npm run dev:api</code>.
+          {full ? (
+            <>Cannot reach the API ({error}). Start it with <code className="font-mono">npm run dev:api</code>.</>
+          ) : (
+            <>The assistant is offline right now. Please try again shortly.</>
+          )}
         </span>
       </div>
     );
   }
 
-  if (!health) return <div className="h-9 border-b border-ink-200 bg-white" />;
+  if (!health) return full ? <div className="h-9 border-b border-ink-200 bg-white" /> : null;
+
+  // User surface: silence unless the answers would be stubs.
+  if (!full) {
+    if (!health.degraded) return null;
+    return (
+      <div className="border-b border-amber-200 bg-amber-50 px-6 py-2 text-sm text-amber-900">
+        <span className="mx-auto block max-w-7xl">
+          <strong>Demo mode.</strong> No model is configured, so answers are placeholders rather
+          than real results.
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="border-b border-ink-200 bg-white">

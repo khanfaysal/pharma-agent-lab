@@ -1,40 +1,48 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
-import {
-  ARCHITECTURE_BLURBS, ARCHITECTURE_LABELS, api,
-  type AgentRunResult, type Architecture,
-} from '@/lib/api';
-import { Citations, Metrics, RouteBadge, StepTrace } from '@/components/RunTrace';
+import { api, type AgentRunResult } from '@/lib/api';
+import { recordRun } from '@/lib/history';
+import { toChatBody, useSettings } from '@/lib/settings';
 
-const ARCHITECTURES: Architecture[] = ['single', 'multi', 'router-only', 'baseline-no-tools'];
+/**
+ * The user surface: a question, and an answer.
+ *
+ * Everything that used to sit under the search box -- architecture buttons, the
+ * router toggle, the step trace, cost and token counts -- has moved. The knobs
+ * are in /settings, the instrumentation is under /dev. What is left is the part
+ * a person actually came for.
+ */
 
 const EXAMPLES = [
   'Who manufactures Napa and what is its active ingredient?',
   'What is the cheapest alternative brand to Seclo?',
-  'How long do you keep my search history?',
   'What is the renal dose of Ciprofloxacin?',
-  'Am I allowed to scrape the database?',
-  'How current is your price data, and what does Napa cost?',
+  'How long do you keep my search history?',
 ];
 
 export default function AskPage() {
+  const { settings } = useSettings();
   const [question, setQuestion] = useState('');
-  const [architecture, setArchitecture] = useState<Architecture>('single');
-  const [useModelRouter, setUseModelRouter] = useState(true);
+  const [asked, setAsked] = useState('');
   const [run, setRun] = useState<AgentRunResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function ask(q: string) {
-    if (!q.trim() || loading) return;
+    const trimmed = q.trim();
+    if (!trimmed || loading) return;
+
     setLoading(true);
     setError(null);
     setRun(null);
+    setAsked(trimmed);
+
     try {
-      setRun(await api.post<AgentRunResult>('/chat', {
-        question: q.trim(), architecture, useModelRouter,
-      }));
+      const result = await api.post<AgentRunResult>('/chat', toChatBody(trimmed, settings));
+      setRun(result);
+      if (result.status !== 'error') recordRun(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -42,133 +50,118 @@ export default function AskPage() {
     }
   }
 
+  const idle = !run && !loading && !error;
+
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-xl font-semibold tracking-tight">Ask the agent</h1>
-        <p className="mt-1 text-sm text-ink-500">
-          One question, one architecture, with the full trace. Use{' '}
-          <a href="/compare" className="underline">Compare</a> to run several architectures side by side.
-        </p>
-      </header>
+    <div className={idle ? 'mx-auto max-w-2xl pt-12 sm:pt-20' : 'mx-auto max-w-2xl'}>
+      {idle && (
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight text-ink-900">
+            Ask about any medicine
+          </h1>
+          <p className="mt-2 text-sm text-ink-500">
+            Brands, generics, dosing, interactions and prices — answered from a real catalog,
+            with sources.
+          </p>
+        </div>
+      )}
 
       <form
         onSubmit={(e) => { e.preventDefault(); void ask(question); }}
-        className="card space-y-4 p-4"
+        className="flex gap-2"
       >
-        <div className="flex gap-2">
-          <input
-            className="input"
-            placeholder="e.g. Which company makes Seclo, and what does the cheapest equivalent cost?"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-          />
-          <button type="submit" className="btn-primary shrink-0" disabled={loading || !question.trim()}>
-            {loading ? 'Running…' : 'Ask'}
-          </button>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-6">
-          <div>
-            <div className="label mb-1.5">Architecture</div>
-            <div className="flex flex-wrap gap-1.5">
-              {ARCHITECTURES.map((a) => (
-                <button
-                  key={a}
-                  type="button"
-                  onClick={() => setArchitecture(a)}
-                  title={ARCHITECTURE_BLURBS[a]}
-                  className={`rounded-md border px-2.5 py-1 text-xs font-medium transition ${
-                    architecture === a
-                      ? 'border-ink-800 bg-ink-800 text-white'
-                      : 'border-ink-200 bg-white text-ink-600 hover:bg-ink-100'
-                  }`}
-                >
-                  {ARCHITECTURE_LABELS[a]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <label className="flex items-center gap-2 text-xs text-ink-600">
-            <input
-              type="checkbox"
-              checked={useModelRouter}
-              onChange={(e) => setUseModelRouter(e.target.checked)}
-              className="rounded border-ink-300"
-            />
-            LLM router
-            <span className="text-ink-400">(off = keyword heuristic)</span>
-          </label>
-        </div>
-
-        <p className="text-xs text-ink-500">{ARCHITECTURE_BLURBS[architecture]}</p>
+        <input
+          className="input"
+          placeholder="e.g. What is the cheapest alternative to Seclo?"
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          autoFocus
+        />
+        <button
+          type="submit"
+          className="btn-primary shrink-0"
+          disabled={loading || !question.trim()}
+        >
+          {loading ? 'Thinking…' : 'Ask'}
+        </button>
       </form>
 
-      <div className="flex flex-wrap gap-1.5">
-        {EXAMPLES.map((ex) => (
-          <button
-            key={ex}
-            type="button"
-            onClick={() => { setQuestion(ex); void ask(ex); }}
-            className="rounded-full border border-ink-200 bg-white px-3 py-1 text-xs text-ink-600 hover:bg-ink-100"
-          >
-            {ex}
-          </button>
-        ))}
-      </div>
+      {idle && (
+        <div className="mt-4 flex flex-wrap justify-center gap-1.5">
+          {EXAMPLES.map((ex) => (
+            <button
+              key={ex}
+              type="button"
+              onClick={() => { setQuestion(ex); void ask(ex); }}
+              className="rounded-full border border-ink-200 bg-white px-3 py-1 text-xs text-ink-600 hover:bg-ink-100"
+            >
+              {ex}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {loading && (
+        <div className="mt-8 space-y-2" aria-live="polite">
+          <div className="h-3 w-3/4 animate-pulse rounded bg-ink-100" />
+          <div className="h-3 w-full animate-pulse rounded bg-ink-100" />
+          <div className="h-3 w-5/6 animate-pulse rounded bg-ink-100" />
+        </div>
+      )}
 
       {error && (
-        <div className="card border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>
+        <div className="card mt-8 border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          Something went wrong answering that. Please try again.
+          <p className="mt-1 font-mono text-xs text-red-600">{error}</p>
+        </div>
       )}
 
       {run && (
-        <div className="space-y-4">
-          <div className="card space-y-4 p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="label">{ARCHITECTURE_LABELS[run.architecture]}</div>
-                <p className="mt-0.5 text-xs text-ink-400">{run.strategyLabel}</p>
-              </div>
-              {run.runId && <span className="chip">run #{run.runId}</span>}
+        <div className="mt-8">
+          <p className="text-sm text-ink-400">{asked}</p>
+
+          {run.status === 'error' ? (
+            <div className="card mt-3 border-red-200 bg-red-50 p-4 text-sm text-red-800">
+              That question could not be answered this time. Please try rephrasing it.
+              <p className="mt-2 text-xs text-red-600">
+                Developers: the full trace is in{' '}
+                <Link href="/dev/runs" className="underline">Runs</Link>
+                {run.runId ? ` (run #${run.runId})` : ''}.
+              </p>
             </div>
-
-            <RouteBadge run={run} />
-
-            {run.error ? (
-              <p className="rounded bg-red-50 px-3 py-2 font-mono text-sm text-red-700">{run.error}</p>
-            ) : (
-              <div className="whitespace-pre-wrap text-sm leading-relaxed text-ink-900">
-                {run.answer || <span className="text-ink-400">(empty answer)</span>}
+          ) : (
+            <>
+              <div className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-ink-900">
+                {run.answer || <span className="text-ink-400">No answer was produced.</span>}
               </div>
-            )}
 
-            <Citations run={run} />
-            <Metrics run={run} />
-          </div>
-
-          {run.gathered.length > 0 && (
-            <div className="card p-5">
-              <div className="label mb-2">Retrieved evidence ({run.gathered.length})</div>
-              <div className="space-y-2">
-                {run.gathered.map((g, i) => (
-                  <details key={i} className="rounded-md border border-ink-200 bg-ink-50 px-3 py-2">
-                    <summary className="cursor-pointer text-sm text-ink-800">
-                      <span className="chip mr-2">{g.name}</span>
-                      {g.summary}
-                    </summary>
-                    <pre className="mt-2 max-h-80 overflow-auto rounded bg-white p-2 font-mono text-[11px] text-ink-700">
-                      {JSON.stringify(g.data, null, 2)}
-                    </pre>
-                  </details>
-                ))}
-              </div>
-            </div>
+              {run.citations.length > 0 && (
+                <div className="mt-6 border-t border-ink-200 pt-4">
+                  <div className="label mb-2">Sources</div>
+                  <ul className="space-y-1.5">
+                    {run.citations.map((c) => (
+                      <li key={c.ref} className="text-sm text-ink-600">
+                        <span className="chip mr-2">{c.kind === 'sql' ? 'catalog' : 'document'}</span>
+                        {c.uri ? (
+                          <a href={c.uri} className="underline hover:text-ink-900">{c.label}</a>
+                        ) : (
+                          c.label
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
           )}
 
-          <div className="card p-5">
-            <StepTrace steps={run.steps} />
-          </div>
+          <button
+            type="button"
+            onClick={() => { setRun(null); setQuestion(''); setAsked(''); }}
+            className="mt-8 text-xs text-ink-400 underline hover:text-ink-700"
+          >
+            Ask something else
+          </button>
         </div>
       )}
     </div>

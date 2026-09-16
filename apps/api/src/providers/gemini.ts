@@ -11,6 +11,8 @@ interface GeminiPart {
   text?: string;
   functionCall?: { name: string; args: Record<string, unknown> };
   functionResponse?: { name: string; response: Record<string, unknown> };
+  /** Gemini 3.x thinking token; opaque, and must survive a round trip. */
+  thoughtSignature?: string;
 }
 interface GeminiContent { role: 'user' | 'model'; parts: GeminiPart[] }
 
@@ -61,7 +63,12 @@ function toGeminiContents(req: ChatRequest): {
       const parts: GeminiPart[] = [];
       if (msg.content) parts.push({ text: msg.content });
       for (const call of msg.toolCalls ?? []) {
-        parts.push({ functionCall: { name: call.name, args: call.arguments } });
+        parts.push({
+          functionCall: { name: call.name, args: call.arguments },
+          // Gemini 3.x returns 400 INVALID_ARGUMENT if a functionCall is replayed
+          // without the signature it was issued with.
+          ...(call.signature ? { thoughtSignature: call.signature } : {}),
+        });
       }
       if (parts.length) contents.push({ role: 'model', parts });
       continue;
@@ -150,6 +157,7 @@ export class GeminiProvider implements Provider {
         id: `gemini_${Date.now()}_${i}`,
         name: p.functionCall.name,
         arguments: p.functionCall.args ?? {},
+        ...(p.thoughtSignature ? { signature: p.thoughtSignature } : {}),
       }));
 
     return {
@@ -183,6 +191,9 @@ export class GeminiProvider implements Provider {
             requests: batch.map((text) => ({
               model: `models/${model}`,
               content: { parts: [{ text }] },
+              // gemini-embedding-* defaults to 3072 dims; the pgvector column
+              // is EMBEDDING_DIM wide, so ask for that width explicitly.
+              outputDimensionality: config.embeddings.dim,
             })),
           }),
         },

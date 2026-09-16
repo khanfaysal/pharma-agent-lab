@@ -19,6 +19,20 @@ const RATES: Record<string, Rate> = {
   'gemini-2.5-flash': { input: 0.30, output: 2.50 },
   'gemini-2.5-pro': { input: 1.25, output: 10.00 },
   'text-embedding-004': { input: 0.00, output: 0.00 },
+  // The 2.x entries above are kept for replaying old runs; those models are no
+  // longer served to new API keys. Current tier defaults are the 3.x models.
+  //
+  // Every model below is free of charge on the AI Studio free tier, subject to
+  // rate limits. These are the *paid* list rates, so the comparison table shows
+  // what an architecture would cost at production volume rather than $0.
+  'gemini-3.5-flash-lite': { input: 0.30, output: 2.50 },
+  'gemini-3.5-flash': { input: 1.50, output: 9.00 },
+  // 3.6/3.7/3.8 flash share one rate, rising to 1.50/7.50 on 2027-01-01.
+  'gemini-3.6-flash': { input: 0.75, output: 3.75 },
+  'gemini-3.7-flash': { input: 0.75, output: 3.75 },
+  'gemini-3.8-flash': { input: 0.75, output: 3.75 },
+  'gemini-embedding-001': { input: 0.00, output: 0.00 },
+  'gemini-embedding-2': { input: 0.20, output: 0.00 },
 
   // --- Anthropic ------------------------------------------------------
   'claude-fable-5-1': { input: 10.00, output: 50.00 },
