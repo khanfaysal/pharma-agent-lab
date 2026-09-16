@@ -14,8 +14,10 @@ import { usePathname } from 'next/navigation';
  */
 
 const USER_NAV = [
-  { href: '/', label: 'Ask' },
-  { href: '/dashboard', label: 'Dashboard' },
+  { href: '/', label: 'Home' },
+  { href: '/ask', label: 'Assistant' },
+  { href: '/browse', label: 'Medicines' },
+  { href: '/dashboard', label: 'History' },
   { href: '/settings', label: 'Settings' },
 ];
 
@@ -37,12 +39,18 @@ export function Nav() {
     href === '/' || href === '/dev' ? pathname === href : pathname.startsWith(href);
 
   return (
-    <header className="border-b border-ink-200 bg-white">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-6 py-3">
+    <header className={`border-b border-slate-200 bg-white ${inDev ? 'border-t-2 border-t-warn-br' : ''}`}>
+      <div
+        className={`flex flex-wrap items-center gap-x-6 gap-y-2 py-3 ${
+          inDev ? 'w-full px-6 2xl:px-10' : 'mx-auto max-w-6xl px-6'
+        }`}
+      >
         <Link href={inDev ? '/dev' : '/'} className="flex items-baseline gap-2">
-          <span className="text-sm font-semibold tracking-tight">Pharma Agent Lab</span>
+          <span className="font-display text-sm font-semibold tracking-tight text-navy-700">
+            MedIndex
+          </span>
           {inDev && (
-            <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+            <span className="rounded bg-warn-bg px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-warn-fg">
               dev
             </span>
           )}
@@ -55,8 +63,8 @@ export function Nav() {
               href={item.href}
               className={`rounded-md px-3 py-1.5 text-sm transition ${
                 isActive(item.href)
-                  ? 'bg-ink-100 font-medium text-ink-900'
-                  : 'text-ink-600 hover:bg-ink-100 hover:text-ink-900'
+                  ? 'bg-navy-50 font-medium text-navy-700'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-navy-700'
               }`}
             >
               {item.label}
@@ -66,7 +74,7 @@ export function Nav() {
 
         <Link
           href={inDev ? '/' : '/dev'}
-          className="ml-auto rounded-md border border-ink-200 px-2.5 py-1 text-xs text-ink-500 hover:bg-ink-100 hover:text-ink-800"
+          className="ml-auto rounded-md border border-slate-200 px-2.5 py-1 text-xs text-ink-500 hover:bg-ink-100 hover:text-ink-800"
         >
           {inDev ? 'Exit dev tools' : 'Developer tools'}
         </Link>

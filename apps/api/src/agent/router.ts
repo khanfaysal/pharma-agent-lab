@@ -2,6 +2,7 @@ import type { Tier } from '../config.js';
 import { callModel, resolveTier } from '../providers/registry.js';
 import type { ToolGroup } from '../tools/registry.js';
 import { SYSTEM_ROUTER } from './prompts.js';
+import type { PriorTurn } from './recorder.js';
 import type { StepRecorder } from './types.js';
 
 export type Route = 'sql' | 'rag' | 'hybrid' | 'none';
@@ -31,7 +32,7 @@ export function heuristicRoute(question: string): RoutingDecision {
   const q = question.toLowerCase();
 
   const serviceSignals = /\b(privacy|polic|terms|conditions|retention|retain|delete my|gdpr|consent|cookie|rate limit|quota|api key|account|sign ?up|subscription|scrape|licen[cs]e|liabilit|disclaimer|sponsor|contact|support|how does (the )?(search|assistant)|what (is|does) medindex)\b/;
-  const drugSignals = /\b(price|cost|cheap|expensive|taka|bdt|brand|generic|manufactur|company|compan|tablet|capsule|syrup|injection|suspension|mg\b|ml\b|dose|dosage|dosing|side ?effect|contraindicat|interaction|pregnan|indicat|treat|therapy|therapeutic|class|strength|pack)\b/;
+  const drugSignals = /\b(price|cost|cheap|expensive|taka|bdt|brand|generic|manufactur|company|compan|tablet|capsule|syrup|injection|suspension|mg\b|ml\b|dose|dosage|dosing|side ?effect|contraindicat|interaction|pregnan|indicat|treat|therapy|therapeutic|class|strength|pack|medicine|medication|drug|remedy|prescri|suggest|recommend|used for|good for|cure|relief|symptom|disease|syndrome|disorder)\b/;
 
   const service = serviceSignals.test(q);
   const drug = drugSignals.test(q);
@@ -63,10 +64,21 @@ export function heuristicRoute(question: string): RoutingDecision {
 export async function routeQuestion(
   question: string,
   recorder: StepRecorder,
-  { useModel = true }: { useModel?: boolean } = {},
+  { useModel = true, history = [] }: { useModel?: boolean; history?: PriorTurn[] } = {},
 ): Promise<RoutingDecision> {
+  // A follow-up carries almost no signal on its own. "What does it cost?" has
+  // no drug word in it, so both routers send it to the document corpus and the
+  // catalog is never queried. Classify against the resolved question instead:
+  // the last exchange plus the new text.
+  const last = history[history.length - 1];
+  const contextualised = last
+    ? `${last.question}
+${last.answer.slice(0, 300)}
+${question}`
+    : question;
+
   if (!useModel) {
-    const decision = heuristicRoute(question);
+    const decision = heuristicRoute(contextualised);
     await recorder.record({
       kind: 'route',
       agentRole: 'router',
@@ -82,6 +94,14 @@ export async function routeQuestion(
     const res = await callModel(target, {
       messages: [
         { role: 'system', content: SYSTEM_ROUTER },
+        ...(last
+          ? [{
+              role: 'user' as const,
+              content: `Earlier in this conversation:
+Q: ${last.question}
+A: ${last.answer.slice(0, 400)}`,
+            }]
+          : []),
         { role: 'user', content: question },
       ],
       json: true,
@@ -94,7 +114,7 @@ export async function routeQuestion(
       ? { ...parsed, decidedBy: 'model', toolGroup: ROUTE_TO_GROUP[parsed.route] }
       // A router that returns unparsable JSON is a router that failed; fall
       // back rather than defaulting to a route that may be wrong.
-      : { ...heuristicRoute(question), reasoning: 'router returned unparsable JSON' };
+      : { ...heuristicRoute(contextualised), reasoning: 'router returned unparsable JSON' };
 
     await recorder.record({
       kind: 'route',
@@ -111,7 +131,7 @@ export async function routeQuestion(
     return decision;
   } catch (err) {
     const decision = {
-      ...heuristicRoute(question),
+      ...heuristicRoute(contextualised),
       reasoning: `router model failed (${err instanceof Error ? err.message : String(err)}), used keywords`,
     };
     await recorder.record({

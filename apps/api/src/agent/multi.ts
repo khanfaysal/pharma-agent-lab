@@ -3,6 +3,7 @@ import { callModel, resolveTier } from '../providers/registry.js';
 import { executeTool, schemasFor } from '../tools/registry.js';
 import { AgentContext } from './context.js';
 import { SYSTEM_EXECUTOR, SYSTEM_PLANNER, SYSTEM_SYNTHESIZER, renderEvidence } from './prompts.js';
+import { loadConversation } from './recorder.js';
 import { routeQuestion } from './router.js';
 import type { LoopOutcome } from './single.js';
 import type { AgentRunRequest, StepRecorder } from './types.js';
@@ -30,8 +31,11 @@ export async function runMultiModel(
   req: AgentRunRequest,
   recorder: StepRecorder,
 ): Promise<LoopOutcome> {
+  const history = await loadConversation(req.conversationId);
+
   const routing = await routeQuestion(req.question, recorder, {
     useModel: req.useModelRouter ?? true,
+    history,
   });
 
   const planner = resolveTier('fast');
@@ -70,6 +74,7 @@ export async function runMultiModel(
   const ctx = new AgentContext(
     SYSTEM_EXECUTOR,
     `Question: ${req.question}\n\nPlan from the planner:\n${plan || '(no plan produced -- use your judgement)'}`,
+    history,
   );
 
   let status: 'ok' | 'max_steps' = 'ok';

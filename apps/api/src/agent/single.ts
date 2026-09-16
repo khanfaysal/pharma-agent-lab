@@ -3,6 +3,7 @@ import { callModel, resolveTier, type ResolvedModel } from '../providers/registr
 import { executeTool, schemasFor } from '../tools/registry.js';
 import { AgentContext } from './context.js';
 import { SYSTEM_ANSWERER } from './prompts.js';
+import { loadConversation } from './recorder.js';
 import { routeQuestion, type RoutingDecision } from './router.js';
 import type { AgentRunRequest, StepRecorder } from './types.js';
 
@@ -31,15 +32,18 @@ export async function runSingleModel(
   req: AgentRunRequest,
   recorder: StepRecorder,
 ): Promise<LoopOutcome> {
+  const history = await loadConversation(req.conversationId);
+
   const routing = await routeQuestion(req.question, recorder, {
     useModel: req.useModelRouter ?? true,
+    history,
   });
 
   const tier = req.tier ?? routing.tier;
   const model = resolveTier(tier);
   const maxSteps = req.maxSteps ?? config.agent.maxSteps;
 
-  const ctx = new AgentContext(SYSTEM_ANSWERER, req.question);
+  const ctx = new AgentContext(SYSTEM_ANSWERER, req.question, history);
   const tools = schemasFor(routing.toolGroup);
 
   for (let step = 0; step < maxSteps; step++) {

@@ -174,3 +174,51 @@ export const ARCHITECTURE_BLURBS: Record<Architecture, string> = {
   'router-only': 'Retrieval with no generation — isolates retrieval quality.',
   'baseline-no-tools': 'No database, no retrieval — shows what the model already knew.',
 };
+
+/* --------------------------------------------------- directory browse */
+
+export interface GenericRow {
+  generic_id: number;
+  generic_name: string;
+  therapeutic_classes: string | null;
+  brand_count: number;
+  cheapest_brand_price: number | null;
+}
+
+export interface BrandRow {
+  brand_id: number;
+  brand_name: string;
+  company_name: string;
+  generic_name: string;
+  generic_id?: number;
+  form: string | null;
+  strength: string | null;
+  packsize: string | null;
+  price_min: number | null;
+  is_sponsored?: boolean;
+}
+
+/** One monograph, as `v_generic_full` returns it. */
+export interface GenericDetail {
+  generic_id: number;
+  generic_name: string;
+  indication: string | null;
+  adult_dose: string | null;
+  child_dose: string | null;
+  renal_dose: string | null;
+  administration: string | null;
+  contra_indication: string | null;
+  precaution: string | null;
+  interaction: string | null;
+  side_effect: string | null;
+  mode_of_action: string | null;
+  pregnancy_category: string | null;
+  pregnancy_category_note: string | null;
+  brand_count: number;
+  cheapest_brand_price: number | null;
+  therapeutic_classes: string | null;
+  indications: string | null;
+}
+
+export const money = (n: number | null | undefined) =>
+  n === null || n === undefined ? '—' : `৳${n.toFixed(2)}`;

@@ -24,8 +24,50 @@ apps/api    Express + TypeScript ESM. Agent, tools, providers, retrieval, eval.
 apps/web    Next.js 15 App Router. Thin client -- no server-side data access.
 db          SQL migrations, markdown corpus, seed dump.
 scripts     db-setup.mjs (psql driver), mysql2pg.mjs (dump converter).
+agent/      Architecture docs (read these before non-trivial changes).
 .env        ONE file at the repo root, shared by both workspaces and scripts.
 ```
+
+### The web app has three surfaces
+
+```
+DIRECTORY (root)                  ASSISTANT            LAB (/dev)
+  /              home, agent hero   /ask  chat view     /dev  index, totals
+  /browse        A-Z, class, brand  panel on /medicine  /dev/ask, /dev/compare
+  /medicine/[id] monograph                              /dev/search, /dev/eval
+  /dashboard     local history                          /dev/runs
+  /settings      assistant options
+```
+
+Keep them separate. **Anything showing cost, tokens, latency, step traces, model
+names or retrieval internals belongs under `/dev`.** If a user-facing page starts
+needing those, the feature belongs in dev tools instead. `Nav.tsx` and
+`HealthBanner.tsx` both switch on whether the path is under `/dev`.
+
+### The colour contract is load-bearing
+
+navy + slate = the directory. The violet→cyan gradient = **only** things the
+agent produced (orb, reasoning trace, answer-card edge). On a medicine page the
+monograph and the generated panel sit side by side and the gradient is the only
+thing telling a reader which is which — the moment it appears on a button it
+stops meaning "generated". Cyan `#22D3EE` is 1.81 on white: decorative only,
+never text. Use `agent-ink` for agent-coloured words.
+
+Safety colours (`safe`/`caution`/`critical`) are a separate axis from both.
+
+### Conversation history is real
+
+`conversationId` used to be written to `agent_runs` and never read. It now
+seeds the transcript via `loadConversation()`, and the **router** sees the last
+exchange too — without that, "what does it cost?" has no drug word in it, routes
+to the document corpus and never queries the catalog. If you touch routing or
+`AgentContext`, keep both halves.
+
+User settings (architecture, tier, routing, search depth) live in localStorage
+via `lib/settings.ts` and reach the API only as `POST /api/chat` body fields
+through `toChatBody()`. Do not read `localStorage` directly from a page, and do
+not add a server-side settings store without a reason -- these are request
+parameters, not state.
 
 npm workspaces. This is **not** a git repository.
 
@@ -85,6 +127,32 @@ explicitly. Changing the embedding model means checking the dimension and
 re-running `npm run ingest` -- cached vectors are keyed by model name and will
 not be reused.
 
+**Views over junction tables fan out.** `v_brand_full` originally reached
+therapeutic/systemic class through `therapeutic_generic` with a plain LEFT JOIN,
+so a generic in four classes returned four identical rows per brand. Migration
+`004` replaced those joins with correlated `string_agg` subqueries, the same
+shape `v_generic_full` uses. If you add a column sourced from
+`indication_generic` or `therapeutic_generic` to a per-brand view, aggregate it
+— do not join it. The symptom shows up first as a React duplicate-key warning,
+but the real damage is silent: any `LIMIT` over the view returns a fraction of
+the rows, and `COUNT`/`MIN` come back multiplied.
+
+**Changing the embedding model needs `-- --force`.** Plain `npm run ingest`
+skips documents whose `content_hash` is unchanged — it does not look at which
+model produced the stored vectors. After switching `EMBEDDING_MODEL` the skip
+logic reports "6 skipped (unchanged)" and semantic search silently returns zero
+results forever. Use `npm run ingest -w @lab/api -- --force`, then confirm with
+`SELECT embedding_model, count(*) FROM document_chunks GROUP BY 1`.
+
+**One busy model must not kill a run.** Free-tier Gemini returns 503 "high
+demand" often enough to be a normal operating condition. `callModel()` falls
+back across the configured tiers on 429/5xx, because a 503 is a property of the
+model, not the request. Do not remove that — without it a 503 on the *router*,
+the first and smallest call of the run, failed the question before a single tool
+executed, and the user was told to rephrase a perfectly good question. Keep the
+retry budget in `requestJson` tight (2 attempts, 45s) for the same reason:
+three retries at 60s spent 190 seconds arriving at the same 503.
+
 **pgvector is optional.** If the extension is absent the schema degrades to
 `float8[]` with a SQL cosine function and no HNSW index. Any change to
 `vector/store.ts` must work on both paths. `GET /api/health` reports which one
@@ -94,6 +162,9 @@ is live.
 a complete run body** so the UI can render the partial trace. `apps/web/src/lib/api.ts`
 has a deliberate carve-out for non-OK responses carrying an `architecture`
 field. Keep it.
+
+**Never delete `apps/web/.next` while the dev server is running.** It will
+serve 500s for every route until you restart it.
 
 **Arms run sequentially by default.** `runComparison({ parallel: false })` is
 the default because concurrent calls trip free-tier rate limits. Do not flip it

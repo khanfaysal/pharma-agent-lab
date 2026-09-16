@@ -39,15 +39,33 @@ export function asString(v: unknown, fallback = ''): string {
   return fallback;
 }
 
+/**
+ * Absent means absent.
+ *
+ * `Number('')` is 0, so coercing an omitted optional through asString() used to
+ * yield a real 0 rather than "not given". That turned every unset numeric filter
+ * into an active one -- `max_price <= 0 AND min_price >= 0` matched almost
+ * nothing -- and collapsed an unset `limit` to the clamp minimum of 1. The
+ * failure was invisible: the tool reported "no matching rows" for data that was
+ * plainly there, and the model burned its whole step budget rephrasing a query
+ * that was never the problem.
+ */
+function numericOrNull(v: unknown): number | null {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+  const text = asString(v);
+  if (!text) return null;
+  const n = Number(text);
+  return Number.isFinite(n) ? n : null;
+}
+
 export function asInt(v: unknown, fallback: number, { min = 1, max = 100 } = {}): number {
-  const n = typeof v === 'number' ? v : Number(asString(v));
-  if (!Number.isFinite(n)) return fallback;
+  const n = numericOrNull(v);
+  if (n === null) return fallback;
   return Math.min(max, Math.max(min, Math.trunc(n)));
 }
 
 export function asNumber(v: unknown): number | null {
-  const n = typeof v === 'number' ? v : Number(asString(v));
-  return Number.isFinite(n) ? n : null;
+  return numericOrNull(v);
 }
 
 export function asStringArray(v: unknown): string[] {

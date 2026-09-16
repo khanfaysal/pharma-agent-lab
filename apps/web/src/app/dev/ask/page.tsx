@@ -45,8 +45,8 @@ export default function AskPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-xl font-semibold tracking-tight">Ask the agent</h1>
-        <p className="mt-1 text-sm text-ink-500">
+        <h1 className="font-mono text-2xl font-bold uppercase tracking-tight text-navy-900">Ask the agent</h1>
+        <p className="mt-1 text-sm text-slate-500">
           One question, one architecture, with the full trace. Use{' '}
           <a href="/dev/compare" className="underline">Compare</a> to run several architectures side by side.
         </p>
@@ -54,7 +54,7 @@ export default function AskPage() {
 
       <form
         onSubmit={(e) => { e.preventDefault(); void ask(question); }}
-        className="card space-y-4 p-4"
+        className="card-dev space-y-4 p-4"
       >
         <div className="flex gap-2">
           <input
@@ -80,8 +80,8 @@ export default function AskPage() {
                   title={ARCHITECTURE_BLURBS[a]}
                   className={`rounded-md border px-2.5 py-1 text-xs font-medium transition ${
                     architecture === a
-                      ? 'border-ink-800 bg-ink-800 text-white'
-                      : 'border-ink-200 bg-white text-ink-600 hover:bg-ink-100'
+                      ? 'border-navy-900 bg-navy-900 text-white'
+                      : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
                   }`}
                 >
                   {ARCHITECTURE_LABELS[a]}
@@ -90,19 +90,19 @@ export default function AskPage() {
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-xs text-ink-600">
+          <label className="flex items-center gap-2 text-xs text-slate-600">
             <input
               type="checkbox"
               checked={useModelRouter}
               onChange={(e) => setUseModelRouter(e.target.checked)}
-              className="rounded border-ink-300"
+              className="rounded border-slate-300"
             />
             LLM router
-            <span className="text-ink-400">(off = keyword heuristic)</span>
+            <span className="text-slate-400">(off = keyword heuristic)</span>
           </label>
         </div>
 
-        <p className="text-xs text-ink-500">{ARCHITECTURE_BLURBS[architecture]}</p>
+        <p className="text-xs text-slate-500">{ARCHITECTURE_BLURBS[architecture]}</p>
       </form>
 
       <div className="flex flex-wrap gap-1.5">
@@ -111,7 +111,7 @@ export default function AskPage() {
             key={ex}
             type="button"
             onClick={() => { setQuestion(ex); void ask(ex); }}
-            className="rounded-full border border-ink-200 bg-white px-3 py-1 text-xs text-ink-600 hover:bg-ink-100"
+            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600 hover:bg-slate-100"
           >
             {ex}
           </button>
@@ -119,16 +119,16 @@ export default function AskPage() {
       </div>
 
       {error && (
-        <div className="card border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>
+        <div className="card-dev alert-err p-4">{error}</div>
       )}
 
       {run && (
         <div className="space-y-4">
-          <div className="card space-y-4 p-5">
+          <div className="card-dev space-y-4 p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="label">{ARCHITECTURE_LABELS[run.architecture]}</div>
-                <p className="mt-0.5 text-xs text-ink-400">{run.strategyLabel}</p>
+                <p className="mt-0.5 text-xs text-slate-400">{run.strategyLabel}</p>
               </div>
               {run.runId && <span className="chip">run #{run.runId}</span>}
             </div>
@@ -136,10 +136,10 @@ export default function AskPage() {
             <RouteBadge run={run} />
 
             {run.error ? (
-              <p className="rounded bg-red-50 px-3 py-2 font-mono text-sm text-red-700">{run.error}</p>
+              <p className="rounded bg-err-bg px-3 py-2 font-mono text-sm text-err-fg">{run.error}</p>
             ) : (
-              <div className="whitespace-pre-wrap text-sm leading-relaxed text-ink-900">
-                {run.answer || <span className="text-ink-400">(empty answer)</span>}
+              <div className="whitespace-pre-wrap text-sm leading-relaxed text-navy-900">
+                {run.answer || <span className="text-slate-400">(empty answer)</span>}
               </div>
             )}
 
@@ -148,16 +148,16 @@ export default function AskPage() {
           </div>
 
           {run.gathered.length > 0 && (
-            <div className="card p-5">
+            <div className="card-dev p-5">
               <div className="label mb-2">Retrieved evidence ({run.gathered.length})</div>
               <div className="space-y-2">
                 {run.gathered.map((g, i) => (
-                  <details key={i} className="rounded-md border border-ink-200 bg-ink-50 px-3 py-2">
-                    <summary className="cursor-pointer text-sm text-ink-800">
+                  <details key={i} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+                    <summary className="cursor-pointer text-sm text-slate-800">
                       <span className="chip mr-2">{g.name}</span>
                       {g.summary}
                     </summary>
-                    <pre className="mt-2 max-h-80 overflow-auto rounded bg-white p-2 font-mono text-[11px] text-ink-700">
+                    <pre className="mt-2 max-h-80 overflow-auto rounded bg-white p-2 font-mono text-[11px] text-slate-700">
                       {JSON.stringify(g.data, null, 2)}
                     </pre>
                   </details>
@@ -166,7 +166,7 @@ export default function AskPage() {
             </div>
           )}
 
-          <div className="card p-5">
+          <div className="card-dev p-5">
             <StepTrace steps={run.steps} />
           </div>
         </div>

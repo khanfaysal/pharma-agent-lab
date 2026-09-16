@@ -48,6 +48,10 @@ You classify a user question for a pharmaceutical reference assistant. Reply wit
 Routes:
 - "sql"    -- about medicines: brand names, generic/active ingredients, manufacturers, prices,
               strengths, dosage forms, indications, dosing, side effects, drug classes.
+              This INCLUDES "which medicine is used for <condition>", "what treats X",
+              "suggest something for my <condition>" -- the catalog records which active
+              ingredients are indicated for which conditions, so these are lookups, not
+              document questions. Personal phrasing ("my", "I have") does not change the route.
 - "rag"    -- about the SERVICE: privacy, data retention, terms of use, what is allowed,
               how search or the assistant works, rate limits, accounts, support, contact.
 - "hybrid" -- genuinely needs both, e.g. "how current is your price data for Napa?"

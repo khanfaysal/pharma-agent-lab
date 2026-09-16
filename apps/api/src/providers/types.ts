@@ -93,12 +93,21 @@ export class ProviderError extends Error {
   }
 }
 
-/** Shared fetch wrapper: timeout, retry on 429/5xx, uniform error type. */
+/**
+ * Shared fetch wrapper: timeout, retry on 429/5xx, uniform error type.
+ *
+ * The budget here is deliberately tight. Retrying an overloaded model three
+ * times at a 60s timeout took 190 seconds to arrive at the same 503, which the
+ * user experienced as the page hanging and then failing for no stated reason.
+ * Two attempts is enough to ride out a blip; past that the caller's cross-model
+ * fallback (registry.callModel) has a far better chance than another round
+ * against the same busy model.
+ */
 export async function requestJson(
   providerName: string,
   url: string,
   init: RequestInit,
-  { retries = 3, timeoutMs = 60_000 } = {},
+  { retries = 2, timeoutMs = 45_000 } = {},
 ): Promise<unknown> {
   let lastError: Error | null = null;
 

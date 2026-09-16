@@ -15,53 +15,52 @@ places where a run could be timed.
 
 ---
 
-## Two surfaces
-
-The app serves two audiences with incompatible needs. A user wants a search box
-and an answer. A developer wants traces, cost, retrieval internals and the eval
-harness. Showing both makes the product look like a debugger, so they are split:
+## Three audiences, three languages
 
 ```
-USER SURFACE (root)                 DEVELOPER SURFACE (/dev)
-  /            search bar + answer    /dev            index + config + totals
-  /dashboard   my questions, cover    /dev/ask        ask + full step trace
-  /settings    architecture, tier     /dev/compare    arms side by side
-                                      /dev/search     raw retrieval
-                                      /dev/eval       graded suite
-                                      /dev/runs       server-side run history
+DIRECTORY (root)                  ASSISTANT               LAB (/dev)
+  /            home, agent hero     /ask    chat view       /dev/*  unchanged
+  /browse      A-Z, class, brands   panels on /medicine
+  /medicine/[id]  monograph
+  /dashboard   local history
+  /settings    assistant options
 ```
 
-`components/Nav.tsx` swaps the header when you cross `/dev`, and a single link
-in the corner moves between the two. `HealthBanner` does the same: the full
-status strip under `/dev`, and on the user surface **nothing at all** unless
-the API is unreachable or the app is in degraded mode -- row counts and tier
-names mean nothing to someone who just wants an answer.
+The directory bones stay familiar and trusted -- search box, browse by
+brand/generic, medicine detail pages -- and the agent is layered on as a
+distinct, always-available surface rather than replacing them. Someone who does
+not want to talk to an AI can still use this as the medicine directory they came
+for.
 
-## Layout
+### The colour contract
 
-```
-apps/web/src/
-  app/
-    layout.tsx            shell: <Nav/> + <HealthBanner/>
-    page.tsx              USER  landing -> POST /api/chat
-    settings/page.tsx     USER  architecture, tier, routing, depth
-    dashboard/page.tsx    USER  local history + corpus coverage
-    dev/
-      page.tsx            DEV   index, run totals, live configuration
-      ask/page.tsx        DEV   -> POST /api/chat, full trace
-      compare/page.tsx    DEV   -> POST /api/compare
-      search/page.tsx     DEV   -> GET  /api/search/documents, /api/brands
-      runs/page.tsx       DEV   -> GET  /api/runs, /api/runs/summary
-      eval/page.tsx       DEV   -> GET/POST /api/eval/*
-  components/
-    Nav.tsx               user nav vs dev nav, by pathname
-    HealthBanner.tsx      full strip in /dev, warnings only outside it
-    RunTrace.tsx          Metrics / RouteBadge / Citations / StepTrace
-  lib/
-    api.ts                typed fetch client + response types
-    settings.ts           useSettings() -- localStorage
-    history.ts            useHistory() / recordRun() -- localStorage
-```
+Two languages, kept strictly apart:
+
+| | Used for | Never |
+|---|---|---|
+| **navy + slate** | all directory chrome, catalog data, actions | — |
+| **agent violet→cyan** | the orb, reasoning trace, answer-card edge, agent chips | any ordinary UI |
+
+This is load-bearing, not decoration. On a medicine page the monograph and the
+generated panel sit side by side, and the gradient is the only thing telling a
+reader which is which. The moment the accent appears on a button or a nav item
+it stops meaning "this was generated".
+
+Cyan (`agent-end`, #22D3EE) is **1.81 on white** and is decorative only --
+never text, never a fill behind white text. `agent-ink` (#6D28D9, 7.10) exists
+for agent-coloured words.
+
+Safety colours are a third, separate axis: `safe` / `caution` / `critical`,
+each a fg+bg+border triplet, because a contraindication has to be scannable
+before it is readable.
+
+## Typography
+
+Space Grotesk for headlines (technical edge), Plus Jakarta Sans for body
+(humanist, readable through long clinical prose). Both self-hosted through
+`next/font`, bound to `--font-display` / `--font-body` and exposed as
+`font-display` / `font-sans`. Fallback metrics are generated, so there is no
+layout shift.
 
 ## `lib/api.ts` -- the whole data layer
 
@@ -173,6 +172,15 @@ instrumented version of the landing page: architecture picker, router toggle,
 retrieved evidence and the complete step trace.
 
 ## Components
+
+**Width is part of the split.** The directory pages are reading surfaces and
+cap themselves (`max-w-2xl` to `max-w-6xl`). `/dev` is full-bleed:
+`app/dev/layout.tsx` supplies `w-full px-6 2xl:px-10` and the dev pages carry
+no container of their own. A four-arm comparison, a run table with ten numeric
+columns and a step trace all want every pixel, and a centred column makes them
+scroll sideways on the machines where they are actually used. `Nav` and
+`HealthBanner` widen under `/dev` too, so the chrome lines up with the content
+beneath it.
 
 **`Nav.tsx`** reads `usePathname()` and renders the user nav or the dev nav.
 Adding a page means adding it to `USER_NAV` or `DEV_NAV` -- there is no third

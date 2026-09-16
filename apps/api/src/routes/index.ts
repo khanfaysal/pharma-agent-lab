@@ -243,6 +243,75 @@ router.get('/brands', wrap(async (req, res) => {
   res.json({ query: q, results: rows });
 }));
 
+/* ------------------------------------------------------------------ *
+ * Directory browse
+ *
+ * Search answers "I know what I am looking for". Browse answers "show me what
+ * is here", which is how a directory earns trust before anyone asks it a
+ * question. Both are plain SQL over the catalog -- no agent involved.
+ * ------------------------------------------------------------------ */
+
+router.get('/browse/generics', wrap(async (req, res) => {
+  const letter = String(req.query.letter ?? '').trim().slice(0, 1).toUpperCase();
+  const cls = String(req.query.class ?? '').trim();
+  const q = String(req.query.q ?? '').trim();
+  const limit = Math.min(Number(req.query.limit) || 40, 100);
+  const offset = Math.max(Number(req.query.offset) || 0, 0);
+
+  const where: string[] = [];
+  const params: unknown[] = [];
+  const push = (value: unknown, sql: (i: number) => string) => {
+    params.push(value);
+    where.push(sql(params.length));
+  };
+
+  if (letter) push(letter, (i) => `generic_name ILIKE $${i} || '%'`);
+  if (q) push(q, (i) => `generic_name ILIKE '%' || $${i} || '%'`);
+  if (cls) push(cls, (i) => `therapeutic_classes ILIKE '%' || $${i} || '%'`);
+
+  const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  params.push(limit, offset);
+
+  const rows = await query(
+    `SELECT generic_id, generic_name, therapeutic_classes, brand_count, cheapest_brand_price
+       FROM v_generic_full
+       ${clause}
+      ORDER BY generic_name ASC
+      LIMIT $${params.length - 1} OFFSET $${params.length}`,
+    params,
+  );
+
+  const [count] = await query<{ total: number }>(
+    `SELECT count(*)::int AS total FROM v_generic_full ${clause}`,
+    params.slice(0, params.length - 2),
+  );
+
+  res.json({ results: rows, total: count?.total ?? 0, limit, offset });
+}));
+
+/** The A-Z rail, with counts so empty letters can be greyed out. */
+router.get('/browse/letters', wrap(async (_req, res) => {
+  const rows = await query<{ letter: string; n: number }>(
+    `SELECT upper(left(generic_name, 1)) AS letter, count(*)::int AS n
+       FROM generic
+      WHERE generic_name ~ '^[A-Za-z]'
+      GROUP BY 1 ORDER BY 1`,
+  );
+  res.json({ letters: rows });
+}));
+
+/** Therapeutic classes, for the browse filter. */
+router.get('/browse/classes', wrap(async (_req, res) => {
+  const rows = await query<{ name: string; n: number }>(
+    `SELECT tc.therapitic_name AS name, count(DISTINCT tg.generic_id)::int AS n
+       FROM therapeutic_class tc
+       JOIN therapeutic_generic tg ON tg.therapitic_id = tc.therapitic_id
+      GROUP BY 1 HAVING count(DISTINCT tg.generic_id) > 2
+      ORDER BY 2 DESC LIMIT 60`,
+  );
+  res.json({ classes: rows });
+}));
+
 router.get('/generics/:id', wrap(async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) { res.status(400).json({ error: 'invalid id' }); return; }

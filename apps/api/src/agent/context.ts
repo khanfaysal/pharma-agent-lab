@@ -2,6 +2,7 @@ import { config } from '../config.js';
 import { estimateTokens } from '../providers/pricing.js';
 import type { ChatMessage } from '../providers/types.js';
 import type { Citation, ToolResult } from '../tools/types.js';
+import type { PriorTurn } from './recorder.js';
 
 /**
  * Context management for the agent loop.
@@ -37,8 +38,18 @@ export class AgentContext {
   readonly gathered: GatheredResult[] = [];
   private compactions = 0;
 
-  constructor(systemPrompt: string, question: string) {
+  constructor(systemPrompt: string, question: string, history: PriorTurn[] = []) {
     this.messages.push({ role: 'system', content: systemPrompt });
+
+    // Prior turns go in as plain user/assistant text, without their tool calls.
+    // Replaying old tool traffic would double the transcript for evidence the
+    // model has already summarised, and the answer text is what a follow-up
+    // actually refers back to.
+    for (const turn of history) {
+      this.messages.push({ role: 'user', content: turn.question });
+      this.messages.push({ role: 'assistant', content: turn.answer });
+    }
+
     this.messages.push({ role: 'user', content: question });
   }
 

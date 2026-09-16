@@ -31,8 +31,8 @@ export function HealthBanner() {
 
   if (error) {
     return (
-      <div className="border-b border-red-200 bg-red-50 px-6 py-2 text-sm text-red-800">
-        <span className="mx-auto block max-w-7xl">
+      <div className="strip-err">
+        <span className="block">
           {full ? (
             <>Cannot reach the API ({error}). Start it with <code className="font-mono">npm run dev:api</code>.</>
           ) : (
@@ -43,14 +43,14 @@ export function HealthBanner() {
     );
   }
 
-  if (!health) return full ? <div className="h-9 border-b border-ink-200 bg-white" /> : null;
+  if (!health) return full ? <div className="h-9 border-b border-slate-200 bg-white" /> : null;
 
   // User surface: silence unless the answers would be stubs.
   if (!full) {
     if (!health.degraded) return null;
     return (
-      <div className="border-b border-amber-200 bg-amber-50 px-6 py-2 text-sm text-amber-900">
-        <span className="mx-auto block max-w-7xl">
+      <div className="strip-warn">
+        <span className="block">
           <strong>Demo mode.</strong> No model is configured, so answers are placeholders rather
           than real results.
         </span>
@@ -59,8 +59,8 @@ export function HealthBanner() {
   }
 
   return (
-    <div className="border-b border-ink-200 bg-white">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-1 px-6 py-2 text-xs text-ink-500">
+    <div className="border-b border-slate-200 bg-white">
+      <div className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 px-6 py-2 text-xs text-slate-500 2xl:px-10">
         <span className="chip">
           {health.counts.brands?.toLocaleString()} brands · {health.counts.generics?.toLocaleString()} generics
         </span>
@@ -77,8 +77,8 @@ export function HealthBanner() {
       </div>
 
       {health.degraded && (
-        <div className="border-t border-amber-200 bg-amber-50 px-6 py-2 text-sm text-amber-900">
-          <span className="mx-auto block max-w-7xl">
+        <div className="border-t border-warn-br bg-warn-bg px-6 py-2 text-sm text-warn-fg">
+          <span className="block">
             <strong>Degraded mode.</strong> No provider key is configured, so every model call is
             answered by the deterministic mock and embeddings are hashed bag-of-words. The pipeline
             runs end to end, but any comparison you make here compares stubs. Set{' '}

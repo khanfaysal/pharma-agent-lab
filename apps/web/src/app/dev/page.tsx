@@ -54,8 +54,10 @@ export default function DevIndexPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-xl font-semibold tracking-tight">Developer tools</h1>
-        <p className="mt-1 text-sm text-ink-500">
+        <h1 className="font-mono text-2xl font-bold uppercase tracking-tight text-navy-900">
+          Developer tools
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
           Instrumentation for the agent behind the user-facing app. Nothing here is visible at{' '}
           <Link href="/" className="underline">the front door</Link>.
         </p>
@@ -63,20 +65,20 @@ export default function DevIndexPage() {
 
       <section className="grid gap-3 sm:grid-cols-2">
         {TOOLS.map((t) => (
-          <Link key={t.href} href={t.href} className="card block p-4 transition hover:border-ink-400">
-            <div className="text-sm font-medium text-ink-900">{t.title}</div>
-            <p className="mt-1 text-xs leading-relaxed text-ink-500">{t.body}</p>
+          <Link key={t.href} href={t.href} className="card-dev card-dev-hover block overflow-hidden">
+            <div className="card-dev-head">{t.title}</div>
+            <p className="px-4 py-3 text-xs leading-relaxed text-slate-600">{t.body}</p>
           </Link>
         ))}
       </section>
 
       {summary.length > 0 && (
         <section>
-          <h2 className="mb-3 text-sm font-medium text-ink-900">Recorded so far</h2>
-          <div className="card overflow-x-auto">
-            <table className="w-full text-sm">
+          <h2 className="eyebrow mb-3 text-navy-900">Recorded so far</h2>
+          <div className="card-dev overflow-x-auto">
+            <table className="w-full font-mono text-sm">
               <thead>
-                <tr className="border-b border-ink-200 text-left text-xs text-ink-500">
+                <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
                   <th className="px-4 py-2 font-medium">Architecture</th>
                   <th className="px-4 py-2 text-right font-medium">Runs</th>
                   <th className="px-4 py-2 text-right font-medium">Avg latency</th>
@@ -86,16 +88,16 @@ export default function DevIndexPage() {
               </thead>
               <tbody>
                 {summary.map((r) => (
-                  <tr key={r.architecture} className="border-b border-ink-100 last:border-0">
-                    <td className="px-4 py-2 text-ink-900">{r.architecture}</td>
-                    <td className="px-4 py-2 text-right tabular-nums text-ink-600">{r.runs}</td>
-                    <td className="px-4 py-2 text-right tabular-nums text-ink-600">
+                  <tr key={r.architecture} className="border-b border-slate-100 last:border-0">
+                    <td className="px-4 py-2 text-navy-900">{r.architecture}</td>
+                    <td className="px-4 py-2 text-right tabular-nums text-slate-600">{r.runs}</td>
+                    <td className="px-4 py-2 text-right tabular-nums text-slate-600">
                       {Math.round(r.avg_latency_ms).toLocaleString()} ms
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums text-ink-600">
+                    <td className="px-4 py-2 text-right tabular-nums text-slate-600">
                       ${r.avg_cost_usd.toFixed(5)}
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums text-ink-600">
+                    <td className="px-4 py-2 text-right tabular-nums text-slate-600">
                       {r.avg_steps.toFixed(1)}
                     </td>
                   </tr>
@@ -108,8 +110,8 @@ export default function DevIndexPage() {
 
       {health && (
         <section>
-          <h2 className="mb-3 text-sm font-medium text-ink-900">Configuration</h2>
-          <dl className="card divide-y divide-ink-100 text-sm">
+          <h2 className="eyebrow mb-3 text-navy-900">Configuration</h2>
+          <dl className="card-dev divide-y divide-slate-100 font-mono text-sm">
             {[
               ['Database', health.database],
               ['Vector backend', health.vectorBackend === 'pgvector' ? 'pgvector (HNSW)' : 'float8[] fallback'],
@@ -118,8 +120,8 @@ export default function DevIndexPage() {
               ...health.tiers.map((t) => [`Tier: ${t.tier}`, t.degraded ? `${t.effective} (degraded)` : t.effective]),
             ].map(([k, v]) => (
               <div key={k} className="flex gap-4 px-4 py-2">
-                <dt className="w-40 shrink-0 text-ink-500">{k}</dt>
-                <dd className="font-mono text-xs text-ink-800">{v}</dd>
+                <dt className="w-40 shrink-0 text-slate-500">{k}</dt>
+                <dd className="font-mono text-xs text-slate-800">{v}</dd>
               </div>
             ))}
           </dl>

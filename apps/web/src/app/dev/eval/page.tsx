@@ -76,17 +76,17 @@ export default function EvalPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-xl font-semibold tracking-tight">Evaluate</h1>
-        <p className="mt-1 text-sm text-ink-500">
+        <h1 className="font-mono text-2xl font-bold uppercase tracking-tight text-navy-900">Evaluate</h1>
+        <p className="mt-1 text-sm text-slate-500">
           Retrieval quality and answer quality are separate failure modes, so they are scored
           separately. The retrieval pass costs nothing and spends no tokens; the architecture pass
           spends real ones.
         </p>
       </header>
 
-      {error && <div className="card border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
+      {error && <div className="card-dev alert-err p-4">{error}</div>}
 
-      <div className="card p-4">
+      <div className="card-dev p-4">
         <div className="flex flex-wrap items-center gap-3">
           <span className="label">Gold set</span>
           <span className="chip">{cases.length} cases</span>
@@ -97,11 +97,11 @@ export default function EvalPage() {
       </div>
 
       {/* ------------------------------------------------ retrieval */}
-      <section className="card p-5">
+      <section className="card-dev p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-sm font-semibold">Retrieval</h2>
-            <p className="mt-1 text-xs text-ink-500">
+            <p className="mt-1 text-xs text-slate-500">
               recall@k, precision@k, MRR and nDCG for each retrieval mode. nDCG is the one to watch:
               it penalises burying a relevant passage at rank 6 where context truncation may drop it.
             </p>
@@ -119,8 +119,8 @@ export default function EvalPage() {
         {retrieval && (
           <div className="mt-4 space-y-4">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-ink-200">
-                <thead className="bg-ink-50">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50">
                   <tr>
                     <th className="th">Mode</th>
                     <th className="th text-right">Cases</th>
@@ -131,7 +131,7 @@ export default function EvalPage() {
                     <th className="th text-right">Latency</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-ink-100">
+                <tbody className="divide-y divide-slate-100">
                   {retrieval.results.map((r) => (
                     <tr key={r.mode}>
                       <td className="td font-medium">{r.mode}</td>
@@ -154,15 +154,15 @@ export default function EvalPage() {
               const misses = r.perCase.filter((c) => c.recallAtK === 0);
               if (!misses.length) return null;
               return (
-                <details key={r.mode} className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
-                  <summary className="cursor-pointer text-sm text-amber-900">
+                <details key={r.mode} className="rounded-md border border-warn-br bg-warn-bg px-3 py-2">
+                  <summary className="cursor-pointer text-sm text-warn-fg">
                     {r.mode}: {misses.length} case(s) retrieved nothing relevant
                   </summary>
                   <ul className="mt-2 space-y-2">
                     {misses.map((m) => (
-                      <li key={m.caseId} className="text-xs text-ink-700">
+                      <li key={m.caseId} className="text-xs text-slate-700">
                         <div className="font-medium">{m.question}</div>
-                        <div className="font-mono text-ink-500">
+                        <div className="font-mono text-slate-500">
                           wanted [{m.relevant.join(', ')}] · got [{m.retrieved.slice(0, 4).join(', ')}]
                         </div>
                       </li>
@@ -176,18 +176,18 @@ export default function EvalPage() {
       </section>
 
       {/* ------------------------------------------------ architectures */}
-      <section className="card p-5">
+      <section className="card-dev p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-sm font-semibold">Architectures</h2>
-            <p className="mt-1 text-xs text-ink-500">
+            <p className="mt-1 text-xs text-slate-500">
               End-to-end: route accuracy, substring answer assertions, citation recall, cost and
               latency per arm. The no-tools baseline is included on purpose — without it you cannot
               tell how much of a score came from retrieval.
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <label className="text-xs text-ink-500">
+            <label className="text-xs text-slate-500">
               cases
               <input
                 type="number"
@@ -195,7 +195,7 @@ export default function EvalPage() {
                 max={30}
                 value={limit}
                 onChange={(e) => setLimit(Number(e.target.value))}
-                className="ml-1 w-16 rounded border border-ink-300 px-2 py-1 text-xs"
+                className="ml-1 w-16 rounded border border-slate-300 px-2 py-1 text-xs"
               />
             </label>
             <button
@@ -212,8 +212,8 @@ export default function EvalPage() {
         {agents && (
           <div className="mt-4 space-y-4">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-ink-200">
-                <thead className="bg-ink-50">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50">
                   <tr>
                     <th className="th">Architecture</th>
                     <th className="th text-right">Cases</th>
@@ -226,14 +226,14 @@ export default function EvalPage() {
                     <th className="th text-right">Cost</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-ink-100">
+                <tbody className="divide-y divide-slate-100">
                   {agents.summaries.map((s) => (
                     <tr key={s.architecture}>
                       <td className="td font-medium">
                         {ARCHITECTURE_LABELS[s.architecture]}
                         {s.degraded && <span className="chip ml-1">mock</span>}
                         {s.failures > 0 && (
-                          <span className="chip ml-1 border-red-200 bg-red-50 text-red-700">
+                          <span className="chip ml-1 border-err-br bg-err-bg text-err-fg">
                             {s.failures} failed
                           </span>
                         )}
@@ -262,25 +262,25 @@ export default function EvalPage() {
               );
               if (!bad.length) return null;
               return (
-                <details key={s.architecture} className="rounded-md border border-ink-200 bg-ink-50 px-3 py-2">
-                  <summary className="cursor-pointer text-sm text-ink-800">
+                <details key={s.architecture} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+                  <summary className="cursor-pointer text-sm text-slate-800">
                     {ARCHITECTURE_LABELS[s.architecture]}: {bad.length} case(s) with a miss
                   </summary>
                   <ul className="mt-2 space-y-3">
                     {bad.map((c) => (
                       <li key={c.caseId} className="text-xs">
-                        <div className="font-medium text-ink-900">{c.question}</div>
+                        <div className="font-medium text-navy-900">{c.question}</div>
                         {c.routeCorrect === false && (
-                          <div className="text-amber-700">
+                          <div className="text-warn-fg">
                             route: expected {c.expectedRoute}, got {c.actualRoute}
                           </div>
                         )}
                         {c.answerMisses.length > 0 && (
-                          <div className="text-amber-700">
+                          <div className="text-warn-fg">
                             missing from answer: {c.answerMisses.join(', ')}
                           </div>
                         )}
-                        <p className="mt-1 whitespace-pre-wrap text-ink-500">{c.answer}</p>
+                        <p className="mt-1 whitespace-pre-wrap text-slate-500">{c.answer}</p>
                       </li>
                     ))}
                   </ul>
@@ -291,11 +291,11 @@ export default function EvalPage() {
         )}
       </section>
 
-      <section className="card p-5">
+      <section className="card-dev p-5">
         <h2 className="text-sm font-semibold">Cases</h2>
         <div className="mt-3 overflow-x-auto">
-          <table className="min-w-full divide-y divide-ink-200">
-            <thead className="bg-ink-50">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
               <tr>
                 <th className="th">#</th>
                 <th className="th">Question</th>
@@ -304,13 +304,13 @@ export default function EvalPage() {
                 <th className="th">Must contain</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-ink-100">
+            <tbody className="divide-y divide-slate-100">
               {cases.map((c) => (
                 <tr key={c.id}>
-                  <td className="td font-mono text-xs text-ink-400">{c.id}</td>
+                  <td className="td font-mono text-xs text-slate-400">{c.id}</td>
                   <td className="td">
                     {c.question}
-                    {c.notes && <div className="mt-0.5 text-xs text-ink-400">{c.notes}</div>}
+                    {c.notes && <div className="mt-0.5 text-xs text-slate-400">{c.notes}</div>}
                   </td>
                   <td className="td"><span className="chip">{c.expected_route ?? '—'}</span></td>
                   <td className="td font-mono text-xs">{c.relevant_refs.join(', ') || '—'}</td>

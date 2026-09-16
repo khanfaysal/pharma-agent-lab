@@ -31,6 +31,43 @@ export class RunRecorder implements StepRecorder {
   }
 }
 
+export interface PriorTurn { question: string; answer: string }
+
+/**
+ * Prior turns of a conversation, oldest first.
+ *
+ * `conversation_id` used to be written and never read, which made the chat view
+ * a lie: every question looked like a follow-up and was answered as though it
+ * were the first. Seeding the transcript with the last few exchanges is what
+ * makes "what about the syrup form?" resolve against the drug named two turns
+ * ago.
+ *
+ * Capped at the last few turns rather than the whole thread: the transcript is
+ * re-sent on every model call inside the loop, so an unbounded history would
+ * push out the tool results the answer actually depends on.
+ */
+export async function loadConversation(
+  conversationId: string | undefined | null,
+  limit = 4,
+): Promise<PriorTurn[]> {
+  if (!conversationId) return [];
+  try {
+    const rows = await query<{ question: string; answer: string | null }>(
+      `SELECT question, answer FROM agent_runs
+         WHERE conversation_id = $1 AND status = 'ok' AND answer IS NOT NULL AND answer <> ''
+         ORDER BY created_at DESC
+         LIMIT $2`,
+      [conversationId, limit],
+    );
+    return rows.reverse().map((r) => ({ question: r.question, answer: r.answer! }));
+  } catch (err) {
+    // History is an enhancement. If the lookup fails the question is still
+    // answerable on its own, so degrade rather than fail the run.
+    console.warn('[agent] could not load conversation history:', (err as Error).message);
+    return [];
+  }
+}
+
 /** Persist a completed run plus its steps. Returns the run id, or null if the write failed. */
 export async function persistRun(result: AgentRunResult): Promise<number | null> {
   try {

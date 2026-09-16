@@ -39,8 +39,8 @@ export default function ComparePage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-xl font-semibold tracking-tight">Compare architectures</h1>
-        <p className="mt-1 text-sm text-ink-500">
+        <h1 className="font-mono text-2xl font-bold uppercase tracking-tight text-navy-900">Compare architectures</h1>
+        <p className="mt-1 text-sm text-slate-500">
           Same question, same tools, same retrieval — different agent topology. Every arm is timed and
           priced through the same code path, so the differences are the architecture and not the harness.
         </p>
@@ -48,7 +48,7 @@ export default function ComparePage() {
 
       <form
         onSubmit={(e) => { e.preventDefault(); void compare(); }}
-        className="card space-y-4 p-4"
+        className="card-dev space-y-4 p-4"
       >
         <div className="flex gap-2">
           <input
@@ -74,8 +74,8 @@ export default function ComparePage() {
                   title={ARCHITECTURE_BLURBS[a]}
                   className={`rounded-md border px-2.5 py-1 text-xs font-medium transition ${
                     selected.includes(a)
-                      ? 'border-ink-800 bg-ink-800 text-white'
-                      : 'border-ink-200 bg-white text-ink-600 hover:bg-ink-100'
+                      ? 'border-navy-900 bg-navy-900 text-white'
+                      : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
                   }`}
                 >
                   {ARCHITECTURE_LABELS[a]}
@@ -84,26 +84,26 @@ export default function ComparePage() {
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-xs text-ink-600">
+          <label className="flex items-center gap-2 text-xs text-slate-600">
             <input
               type="checkbox"
               checked={parallel}
               onChange={(e) => setParallel(e.target.checked)}
-              className="rounded border-ink-300"
+              className="rounded border-slate-300"
             />
             Run in parallel
-            <span className="text-ink-400">(faster, but free-tier rate limits will skew latency)</span>
+            <span className="text-slate-400">(faster, but free-tier rate limits will skew latency)</span>
           </label>
         </div>
       </form>
 
-      {error && <div className="card border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
+      {error && <div className="card-dev alert-err p-4">{error}</div>}
 
       {result && (
         <>
-          <div className="card overflow-hidden">
-            <table className="min-w-full divide-y divide-ink-200">
-              <thead className="bg-ink-50">
+          <div className="card-dev overflow-hidden">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
                 <tr>
                   <th className="th">Architecture</th>
                   <th className="th">Route</th>
@@ -116,9 +116,9 @@ export default function ComparePage() {
                   <th className="th">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-ink-100">
+              <tbody className="divide-y divide-slate-100">
                 {result.runs.map((run) => (
-                  <tr key={run.architecture} className={run.status === 'error' ? 'bg-red-50' : undefined}>
+                  <tr key={run.architecture} className={run.status === 'error' ? 'bg-err-bg' : undefined}>
                     <td className="td font-medium">{ARCHITECTURE_LABELS[run.architecture]}</td>
                     <td className="td">{run.route}</td>
                     <td className="td text-right font-mono">{run.latencyMs.toLocaleString()} ms</td>
@@ -135,7 +135,7 @@ export default function ComparePage() {
               </tbody>
             </table>
 
-            <div className="flex flex-wrap gap-4 border-t border-ink-200 bg-ink-50 px-3 py-2 text-xs text-ink-600">
+            <div className="flex flex-wrap gap-4 border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
               {([
                 ['cheapest', result.winners.cheapest],
                 ['fastest', result.winners.fastest],
@@ -144,13 +144,15 @@ export default function ComparePage() {
               ] as const).map(([label, winner]) => (
                 <span key={label}>
                   <span className="label">{label}:</span>{' '}
-                  <span className="text-ink-900">{winner ?? '—'}</span>
+                  <span className={winner ? 'rounded bg-navy-50 px-1.5 py-0.5 font-medium text-navy-700' : 'text-slate-400'}>
+                    {winner ?? '—'}
+                  </span>
                 </span>
               ))}
             </div>
           </div>
 
-          <p className="text-xs text-ink-500">
+          <p className="text-xs text-slate-500">
             One question is an anecdote. For a defensible comparison run the full suite on the{' '}
             <a href="/dev/eval" className="underline">Evaluate</a> page, or{' '}
             <code className="font-mono">npm run eval -w @lab/api -- --agents</code>.
@@ -158,19 +160,19 @@ export default function ComparePage() {
 
           <div className="grid gap-4 lg:grid-cols-2">
             {result.runs.map((run) => (
-              <div key={run.architecture} className="card space-y-4 p-5">
+              <div key={run.architecture} className="card-dev space-y-4 p-5">
                 <div>
                   <div className="label">{ARCHITECTURE_LABELS[run.architecture]}</div>
-                  <p className="mt-0.5 text-xs text-ink-400">{run.strategyLabel}</p>
+                  <p className="mt-0.5 text-xs text-slate-400">{run.strategyLabel}</p>
                 </div>
 
                 <RouteBadge run={run} />
 
                 {run.error ? (
-                  <p className="rounded bg-red-50 px-3 py-2 font-mono text-xs text-red-700">{run.error}</p>
+                  <p className="rounded bg-err-bg px-3 py-2 font-mono text-xs text-err-fg">{run.error}</p>
                 ) : (
-                  <div className="whitespace-pre-wrap text-sm leading-relaxed text-ink-900">
-                    {run.answer || <span className="text-ink-400">(empty answer)</span>}
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed text-navy-900">
+                    {run.answer || <span className="text-slate-400">(empty answer)</span>}
                   </div>
                 )}
 
