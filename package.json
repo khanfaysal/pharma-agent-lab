@@ -1,0 +1,23 @@
+{
+  "name": "pharma-agent-lab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A lab for comparing single-model and multi-model agentic RAG architectures over structured SQL + pgvector data.",
+  "workspaces": ["apps/api", "apps/web"],
+  "scripts": {
+    "db:convert": "node scripts/mysql2pg.mjs \"$INPUT_DUMP\" db/seed/pharma_data.sql",
+    "db:setup": "node scripts/db-setup.mjs",
+    "db:reset": "node scripts/db-setup.mjs --drop",
+    "ingest": "npm run ingest -w @lab/api",
+    "eval": "npm run eval -w @lab/api",
+    "dev:api": "npm run dev -w @lab/api",
+    "dev:web": "npm run dev -w @lab/web",
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm:dev:api\" \"npm:dev:web\"",
+    "build": "npm run build -w @lab/api && npm run build -w @lab/web",
+    "typecheck": "npm run typecheck -w @lab/api && npm run typecheck -w @lab/web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": { "node": ">=20.11" }
+}
