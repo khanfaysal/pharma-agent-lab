@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "description": "A lab for comparing single-model and multi-model agentic RAG architectures over structured SQL + pgvector data.",
-  "workspaces": ["apps/api", "apps/web"],
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
   "scripts": {
     "db:convert": "node scripts/mysql2pg.mjs \"$INPUT_DUMP\" db/seed/pharma_data.sql",
     "db:setup": "node scripts/db-setup.mjs",
@@ -19,5 +22,7 @@
   "devDependencies": {
     "concurrently": "^9.1.2"
   },
-  "engines": { "node": ">=20.11" }
+  "engines": {
+    "node": ">=20.11"
+  }
 }
