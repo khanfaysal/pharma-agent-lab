@@ -1,6 +1,99 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --font-display: var(--font-display-face), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --color-canvas: #F7F9FC;
+  --color-navy-50: #eef4fb;
+  --color-navy-100: #d8e6f5;
+  --color-navy-200: #b3cbe9;
+  --color-navy-300: #7fa8d7;
+  --color-navy-400: #4a80c0;
+  --color-navy-500: #2a63a5;
+  --color-navy-600: #1E4E8C;
+  --color-navy-700: #123C6B;
+  --color-navy-800: #0f3159;
+  --color-navy-900: #0d2846;
+  --color-navy-950: #071a2e;
+
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+
+  --color-agent-start: #7C5CFC;
+  --color-agent-end: #22D3EE;
+  --color-agent-ink: #6D28D9;
+  --color-agent-inkAlt: #0E7490;
+  --color-agent-tint: #f5f3ff;
+  --color-agent-tintEdge: #ddd6fe;
+
+  --color-safe-fg: #047857;
+  --color-safe-bg: #ecfdf5;
+  --color-safe-br: #a7f3d0;
+  --color-caution-fg: #b45309;
+  --color-caution-bg: #fffbeb;
+  --color-caution-br: #fde68a;
+  --color-critical-fg: #b91c1c;
+  --color-critical-bg: #fef2f2;
+  --color-critical-br: #fecaca;
+
+  --color-ink-50: #f6f7f9;
+  --color-ink-100: #eceef2;
+  --color-ink-200: #d5d9e2;
+  --color-ink-300: #b0b8c9;
+  --color-ink-400: #8591ab;
+  --color-ink-500: #657390;
+  --color-ink-600: #505c77;
+  --color-ink-700: #424b61;
+  --color-ink-800: #394052;
+  --color-ink-900: #333947;
+
+  --color-brand-50: #eef4fb;
+  --color-brand-100: #d8e6f5;
+  --color-brand-200: #b3cbe9;
+  --color-brand-300: #7fa8d7;
+  --color-brand-400: #4a80c0;
+  --color-brand-500: #2a63a5;
+  --color-brand-600: #1E4E8C;
+  --color-brand-700: #123C6B;
+  --color-brand-800: #0f3159;
+  --color-brand-900: #0d2846;
+
+  --color-ok-fg: #047857;
+  --color-ok-bg: #ecfdf5;
+  --color-ok-br: #a7f3d0;
+  --color-warn-fg: #b45309;
+  --color-warn-bg: #fffbeb;
+  --color-warn-br: #fde68a;
+  --color-err-fg: #b91c1c;
+  --color-err-bg: #fef2f2;
+  --color-err-br: #fecaca;
+  --color-route-sql: #2563eb;
+  --color-route-rag: #b45309;
+  --color-route-hybrid: #0f766e;
+  --color-route-none: #475569;
+
+  --animate-breathe: breathe 1.8s ease-in-out infinite;
+  --animate-shimmer: shimmer 2.2s linear infinite;
+
+  @keyframes breathe {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .65; transform: scale(.94); }
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+}
 
 @layer base {
   /**
@@ -83,7 +176,7 @@
 
   /** Big, confident figures. Prices and counts should land. */
   .stat-value {
-    @apply font-display text-3xl font-bold tabular leading-none tracking-tighter text-navy-700;
+    @apply font-display text-3xl font-bold tabular-nums leading-none tracking-tighter text-navy-700;
   }
   .stat-label {
     @apply font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400;
@@ -110,33 +203,37 @@
 
   .card-dev {
     @apply rounded-lg border-2 border-navy-900 bg-white;
-    box-shadow: 4px 4px 0 0 theme('colors.navy.900');
+    box-shadow: 4px 4px 0 0 var(--color-navy-900);
   }
   .card-dev-hover {
     @apply transition-all duration-150;
   }
   .card-dev-hover:hover {
     transform: translate(2px, 2px);
-    box-shadow: 1px 1px 0 0 theme('colors.navy.900');
+    box-shadow: 1px 1px 0 0 var(--color-navy-900);
   }
   .card-dev-head {
     @apply flex items-center justify-between gap-3 bg-navy-900 px-4 py-2
            font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-white;
   }
   .dev-metric {
-    @apply font-mono text-lg font-bold tabular tracking-tight text-navy-900;
+    @apply font-mono text-lg font-bold tabular-nums tracking-tight text-navy-900;
   }
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm
            font-medium transition disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-navy-600 text-white hover:bg-navy-700
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm
+           font-medium transition disabled:cursor-not-allowed disabled:opacity-50
+           bg-navy-600 text-white hover:bg-navy-700
            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
            focus-visible:outline-navy-500;
   }
   .btn-ghost {
-    @apply btn border border-slate-200 bg-white text-slate-700 hover:bg-slate-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm
+           font-medium transition disabled:cursor-not-allowed disabled:opacity-50
+           border border-slate-200 bg-white text-slate-700 hover:bg-slate-50;
   }
   .input {
     @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm
@@ -164,10 +261,11 @@
 
   /** The gradient itself. One definition, so every agent element matches. */
   .agent-gradient {
-    background-image: linear-gradient(115deg, theme('colors.agent.start'), theme('colors.agent.end'));
+    background-image: linear-gradient(115deg, var(--color-agent-start), var(--color-agent-end));
   }
   .agent-text {
-    @apply agent-gradient bg-clip-text text-transparent;
+    background-image: linear-gradient(115deg, var(--color-agent-start), var(--color-agent-end));
+    @apply bg-clip-text text-transparent;
   }
 
   /**
@@ -182,7 +280,8 @@
   }
   .agent-card::before {
     content: '';
-    @apply agent-gradient absolute inset-x-0 top-0 h-1;
+    background-image: linear-gradient(115deg, var(--color-agent-start), var(--color-agent-end));
+    @apply absolute inset-x-0 top-0 h-1;
   }
 
   /** Chat bubbles. */
@@ -203,13 +302,13 @@
    * ---------------------------------------------------------------- */
 
   .flag { @apply rounded-xl border border-l-4 px-4 py-3 text-sm font-medium; }
-  .flag-safe     { @apply flag border-safe-br     bg-safe-bg     text-safe-fg; }
-  .flag-caution  { @apply flag border-caution-br  bg-caution-bg  text-caution-fg; }
-  .flag-critical { @apply flag border-critical-br bg-critical-bg text-critical-fg; }
+  .flag-safe     { @apply rounded-xl border border-l-4 px-4 py-3 text-sm font-medium border-safe-br     bg-safe-bg     text-safe-fg; }
+  .flag-caution  { @apply rounded-xl border border-l-4 px-4 py-3 text-sm font-medium border-caution-br  bg-caution-bg  text-caution-fg; }
+  .flag-critical { @apply rounded-xl border border-l-4 px-4 py-3 text-sm font-medium border-critical-br bg-critical-bg text-critical-fg; }
 
-  .chip-safe     { @apply chip border-safe-br     bg-safe-bg     text-safe-fg; }
-  .chip-caution  { @apply chip border-caution-br  bg-caution-bg  text-caution-fg; }
-  .chip-critical { @apply chip border-critical-br bg-critical-bg text-critical-fg; }
+  .chip-safe     { @apply inline-flex items-center gap-1 rounded-full border border-safe-br     bg-safe-bg     px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-safe-fg; }
+  .chip-caution  { @apply inline-flex items-center gap-1 rounded-full border border-caution-br  bg-caution-bg  px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-caution-fg; }
+  .chip-critical { @apply inline-flex items-center gap-1 rounded-full border border-critical-br bg-critical-bg px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-critical-fg; }
 
   /* Full-bleed strips under the header. */
   .strip-warn { @apply border-b border-caution-br bg-caution-bg px-6 py-2 text-sm text-caution-fg; }
@@ -220,12 +319,14 @@
    * ---------------------------------------------------------------- */
 
   .alert       { @apply rounded-lg border px-4 py-3 text-sm; }
-  .alert-ok    { @apply alert border-safe-br     bg-safe-bg     text-safe-fg; }
-  .alert-warn  { @apply alert border-caution-br  bg-caution-bg  text-caution-fg; }
-  .alert-err   { @apply alert border-critical-br bg-critical-bg text-critical-fg; }
-  .chip-ok     { @apply chip-safe; }
-  .chip-warn   { @apply chip-caution; }
-  .chip-err    { @apply chip-critical; }
-  .input-hero  { @apply input h-12 px-4 text-base; }
+  .alert-ok    { @apply rounded-lg border px-4 py-3 text-sm border-safe-br     bg-safe-bg     text-safe-fg; }
+  .alert-warn  { @apply rounded-lg border px-4 py-3 text-sm border-caution-br  bg-caution-bg  text-caution-fg; }
+  .alert-err   { @apply rounded-lg border px-4 py-3 text-sm border-critical-br bg-critical-bg text-critical-fg; }
+  .chip-ok     { @apply inline-flex items-center gap-1 rounded-full border border-safe-br     bg-safe-bg     px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-safe-fg; }
+  .chip-warn   { @apply inline-flex items-center gap-1 rounded-full border border-caution-br  bg-caution-bg  px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-caution-fg; }
+  .chip-err    { @apply inline-flex items-center gap-1 rounded-full border border-critical-br bg-critical-bg px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-critical-fg; }
+  .input-hero  { @apply w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-base
+                        outline-none placeholder:text-slate-400 h-12
+                        focus:border-navy-500 focus:ring-2 focus:ring-navy-100; }
   .winner      { @apply border-l-2 border-navy-500 bg-navy-50; }
 }

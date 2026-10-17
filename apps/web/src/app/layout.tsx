@@ -13,14 +13,14 @@ import { Nav } from '@/components/Nav';
 const display = Space_Grotesk({
   subsets: ['latin'],
   weight: ['500', '600', '700'],
-  variable: '--font-display',
+  variable: '--font-display-face',
   display: 'swap',
 });
 
 const body = Plus_Jakarta_Sans({
   subsets: ['latin'],
   weight: ['400', '500', '600'],
-  variable: '--font-body',
+  variable: '--font-body-face',
   display: 'swap',
 });
 
