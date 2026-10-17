@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "pharma-agent-lab",
   "main": ".open-next/worker.js",
-  "compatibility_date": "2025-03-25",
+  "compatibility_date": "2026-10-15",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
     "directory": ".open-next/assets",
@@ -11,7 +11,10 @@
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
-      "service": "pharma-agent-lab-web",
+      "service": "pharma-agent-lab",
     },
   ],
+  "vars": {
+    "NEXT_PUBLIC_API_URL": "https://pharma-agent-lab.onrender.com",
+  },
 }
