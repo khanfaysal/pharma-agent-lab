@@ -9,13 +9,20 @@ const { Pool } = pg;
 pg.types.setTypeParser(pg.types.builtins.NUMERIC, (v) => (v === null ? null : Number(v)));
 pg.types.setTypeParser(pg.types.builtins.INT8, (v) => (v === null ? null : Number(v)));
 
+const localHosts = ['localhost', '127.0.0.1', '::1', 'host.docker.internal'];
+const isLocalHost = localHosts.includes(config.db.host);
+
+const useSsl = process.env.DB_SSL
+  ? process.env.DB_SSL === 'true'
+  : !isLocalHost;
+
 export const pool = new Pool({
   host: config.db.host,
   port: config.db.port,
   user: config.db.user,
   password: config.db.password,
   database: config.db.database,
-  ssl: false,
+  ssl: useSsl ? { rejectUnauthorized: false } : false,
   max: 10,
   idleTimeoutMillis: 30_000,
 });
