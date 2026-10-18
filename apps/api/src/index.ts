@@ -7,7 +7,23 @@ import { router } from './routes/index.js';
 
 const app = express();
 
-app.use(cors({ origin: [config.server.webOrigin], credentials: true }));
+// WEB_ORIGIN may hold several origins separated by commas, e.g.
+// http://localhost:3000,https://pharma-agent-lab.mdfaysalkhancse.workers.dev
+const allowedOrigins = String(config.server.webOrigin)
+  .split(',')
+  .map((o) => o.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // No Origin header: curl, health checks, server-to-server calls.
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      callback(null, false);
+    },
+    credentials: true,
+  }),
+);
 app.use(express.json({ limit: '1mb' }));
 
 // Request log. Agent calls take seconds, so knowing which one is in flight
@@ -36,6 +52,7 @@ const server = app.listen(config.server.port, async () => {
   console.log(`  database              ${config.db.database}@${config.db.host}:${config.db.port}`);
   console.log(`  vector backend        ${backend}`);
   console.log(`  embeddings            ${config.embeddings.provider}:${config.embeddings.model} (${config.embeddings.dim}d)`);
+  console.log(`  allowed origins       ${allowedOrigins.join(', ') || '(none)'}`);
   for (const t of tiers) {
     console.log(`  tier ${t.tier.padEnd(9)}        ${t.effective}${t.degraded ? '   <-- DEGRADED: no key, using mock' : ''}`);
   }
