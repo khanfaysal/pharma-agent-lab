@@ -18,7 +18,6 @@ const USER_NAV = [
   { href: '/ask', label: 'Assistant' },
   { href: '/browse', label: 'Medicines' },
   { href: '/dashboard', label: 'History' },
-  { href: '/settings', label: 'Settings' },
 ];
 
 const DEV_NAV = [
@@ -28,6 +27,7 @@ const DEV_NAV = [
   { href: '/dev/search', label: 'Retrieval' },
   { href: '/dev/eval', label: 'Evaluate' },
   { href: '/dev/runs', label: 'Runs' },
+  { href: '/settings', label: 'Settings' },
 ];
 
 export function Nav() {
